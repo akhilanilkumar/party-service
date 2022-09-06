@@ -1,49 +1,29 @@
 package com.party.partyservice.services.impl;
 
-import com.party.partyservice.entity.Party;
 import com.party.partyservice.models.DevelopmentDTO;
 import com.party.partyservice.models.LeaderDTO;
-import com.party.partyservice.models.PartyDTO;
 import lombok.extern.log4j.Log4j2;
 import org.bouncycastle.util.Arrays;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Component
 @Log4j2
-public final class PartyUtility {
+public class RemoteServiceHelper {
 
-    private static final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplate();
+    @Value("${uri.leader-service}")
+    private String LEADER_SERVICE_URI;
+    @Value("${uri.development-service}")
+    private String DEV_SERVICE_URI;
 
-    private static final String DEV_SERVICE_URI = "http://localhost:9093/development/";
-    private static final String LEADER_SERVICE_URI = "http://localhost:9092/leader/";
-
-    private PartyUtility() {
-
-    }
-
-    public static Party convertToEntity(PartyDTO partyDTO) {
-        Party party = new Party();
-        party.setId(partyDTO.getId());
-        party.setName(partyDTO.getName());
-        party.setFounderName(partyDTO.getFounderName());
-        party.setFounderYear(partyDTO.getFounderYear());
-        return party;
-    }
-
-    public static PartyDTO convertToDTO(Party party) {
-        PartyDTO partyDTO = new PartyDTO();
-        partyDTO.setId(party.getId());
-        partyDTO.setName(party.getName());
-        partyDTO.setFounderName(party.getFounderName());
-        partyDTO.setFounderYear(party.getFounderYear());
-        return partyDTO;
-    }
-
-    public static List<DevelopmentDTO> getAllAssignedDevWorks(Long partyId, Long leaderId) {
+    public List<DevelopmentDTO> getAllAssignedDevWorks(Long partyId, Long leaderId) {
         final String URI = DEV_SERVICE_URI + "works/" + partyId + "/" + leaderId;
         ResponseEntity<DevelopmentDTO[]> devTemplateObj = restTemplate.getForEntity(URI, DevelopmentDTO[].class);
         List<DevelopmentDTO> developmentDTOs = new ArrayList<>();
@@ -59,7 +39,7 @@ public final class PartyUtility {
      * @param partyId
      * @return
      */
-    public static List<LeaderDTO> findLeaderByPartyId(Long partyId) {
+    public List<LeaderDTO> findLeaderByPartyId(Long partyId) {
         LeaderDTO[] leadersArr = restTemplate.getForObject(LEADER_SERVICE_URI + "get-all-leaders/" + partyId, LeaderDTO[].class);
         return Arrays.isNullOrEmpty(leadersArr) ? new ArrayList<>() : List.of(leadersArr);
     }
@@ -71,7 +51,7 @@ public final class PartyUtility {
      * @param leaderId
      * @return
      */
-    public static Optional<LeaderDTO> findLeaderByPartyIdAndLeaderId(Long partyId, Long leaderId) {
+    public Optional<LeaderDTO> findLeaderByPartyIdAndLeaderId(Long partyId, Long leaderId) {
         final String URI = LEADER_SERVICE_URI + "find/" + partyId + "/" + leaderId;
         Optional<LeaderDTO> optionalLeaderDTO = Optional.ofNullable(restTemplate.getForObject(URI, LeaderDTO.class));
         log.info("Response from {}: {}", URI, optionalLeaderDTO.get());
@@ -85,7 +65,7 @@ public final class PartyUtility {
      * @param leaderId
      * @return
      */
-    public static boolean deleteLeaderByPartyIdAndLeaderId(Long partyId, Long leaderId) {
+    public boolean deleteLeaderByPartyIdAndLeaderId(Long partyId, Long leaderId) {
         final String URI = LEADER_SERVICE_URI + "delete/" + partyId + "/" + leaderId;
         restTemplate.delete(URI, Boolean.class);
         return true;

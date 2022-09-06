@@ -8,6 +8,7 @@ import com.party.partyservice.models.LeaderDTO;
 import com.party.partyservice.models.PartyDTO;
 import com.party.partyservice.repository.PartyRepository;
 import com.party.partyservice.services.PartyService;
+import com.party.partyservice.utility.PartyUtility;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,9 @@ public class PartyServiceImpl implements PartyService {
 
     @Autowired
     private PartyRepository partyRepository;
+
+    @Autowired
+    private RemoteServiceHelper remoteServiceHelper;
 
     /**
      * Register a political party as new
@@ -48,15 +52,15 @@ public class PartyServiceImpl implements PartyService {
         // Check if the party exists
         partyRepository
                 .findById(partyId)
-                .orElseThrow(() -> new NoSuchPartyExistException("No matching records found for a Party: " + partyId));
+                .orElseThrow(() -> new NoSuchPartyExistException(partyId));
 
         // Check if the leader exists
-        LeaderDTO leaderDTO = PartyUtility
+        LeaderDTO leaderDTO = remoteServiceHelper
                 .findLeaderByPartyIdAndLeaderId(partyId, leaderId)
-                .orElseThrow(() -> new NoSuchLeaderExistException("No matching records found for Leader: " + leaderId));
+                .orElseThrow(() -> new NoSuchLeaderExistException(leaderId));
         log.info("Response from Leader Service {}", leaderDTO);
         // Delete leader if he exists
-        return PartyUtility.deleteLeaderByPartyIdAndLeaderId(partyId, leaderId);
+        return remoteServiceHelper.deleteLeaderByPartyIdAndLeaderId(partyId, leaderId);
     }
 
     /**
@@ -73,15 +77,15 @@ public class PartyServiceImpl implements PartyService {
         // Check if the Party exists or not
         partyRepository
                 .findById(partyId)
-                .orElseThrow(() -> new NoSuchPartyExistException("No matching records found for Leader: " + partyId));
+                .orElseThrow(() -> new NoSuchPartyExistException(partyId));
 
         // Check if a Leader exists or not
-        PartyUtility
+        remoteServiceHelper
                 .findLeaderByPartyIdAndLeaderId(partyId, leaderId)
-                .orElseThrow(() -> new NoSuchLeaderExistException("No matching records found for Leader: " + leaderId));
+                .orElseThrow(() -> new NoSuchLeaderExistException(leaderId));
 
         // Call the Development Service
-        return PartyUtility.getAllAssignedDevWorks(partyId, leaderId);
+        return remoteServiceHelper.getAllAssignedDevWorks(partyId, leaderId);
     }
 
     /**
@@ -94,9 +98,9 @@ public class PartyServiceImpl implements PartyService {
     public List<LeaderDTO> getAllPoliticalLeadersRegisteredWithParty(Long partyId) throws NoSuchPartyExistException {
         Party party = partyRepository
                 .findById(partyId)
-                .orElseThrow(() -> new NoSuchPartyExistException("No matching records found for Party: " + partyId));
+                .orElseThrow(() -> new NoSuchPartyExistException(partyId));
         PartyDTO partyDTOResponse = PartyUtility.convertToDTO(party);
-        return PartyUtility.findLeaderByPartyId(partyDTOResponse.getId());
+        return remoteServiceHelper.findLeaderByPartyId(partyDTOResponse.getId());
     }
 
     /**
