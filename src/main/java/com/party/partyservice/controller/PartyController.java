@@ -45,7 +45,7 @@ public class PartyController {
         return partyService.getAllPoliticalLeadersRegisteredWithParty(partyId);
     }
 
-    @GetMapping(value = "leader/works/{partyId}/{leaderId}")
+    @GetMapping(value = "leaders/works/{partyId}/{leaderId}")
     public List<DevelopmentDTO> getAssignedWorks(@PathVariable Long partyId, @PathVariable Long leaderId) throws NoSuchLeaderExistException, NoSuchPartyExistException {
         return partyService.getAllDevelopmentWorksAssignedToLeader(partyId, leaderId);
     }
