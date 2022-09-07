@@ -1,15 +1,13 @@
 package com.party.partyservice.services.impl;
 
+import com.party.partyservice.client.DevelopmentClient;
+import com.party.partyservice.client.LeaderClient;
 import com.party.partyservice.models.DevelopmentDTO;
 import com.party.partyservice.models.LeaderDTO;
 import lombok.extern.log4j.Log4j2;
-import org.bouncycastle.util.Arrays;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,20 +15,16 @@ import java.util.Optional;
 @Log4j2
 public class RemoteServiceHelper {
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    @Value("${uri.leader-service}")
-    private String LEADER_SERVICE_URI;
-    @Value("${uri.development-service}")
-    private String DEV_SERVICE_URI;
+    @Autowired
+    private LeaderClient leaderClient;
+
+    @Autowired
+    private DevelopmentClient developmentClient;
 
     public List<DevelopmentDTO> getAllAssignedDevWorks(Long partyId, Long leaderId) {
-        final String URI = DEV_SERVICE_URI + "works/" + partyId + "/" + leaderId;
-        ResponseEntity<DevelopmentDTO[]> devTemplateObj = restTemplate.getForEntity(URI, DevelopmentDTO[].class);
-        List<DevelopmentDTO> developmentDTOs = new ArrayList<>();
-        if (!Arrays.isNullOrEmpty(devTemplateObj.getBody())) {
-            developmentDTOs = List.of(devTemplateObj.getBody());
-        }
-        return developmentDTOs;
+        List<DevelopmentDTO> developmentDetails = developmentClient.getDevelopmentDetails(partyId, leaderId);
+        log.debug("Response from Dev Service: {}", developmentDetails);
+        return developmentDetails;
     }
 
     /**
@@ -40,8 +34,9 @@ public class RemoteServiceHelper {
      * @return
      */
     public List<LeaderDTO> findLeaderByPartyId(Long partyId) {
-        LeaderDTO[] leadersArr = restTemplate.getForObject(LEADER_SERVICE_URI + "get-all-leaders/" + partyId, LeaderDTO[].class);
-        return Arrays.isNullOrEmpty(leadersArr) ? new ArrayList<>() : List.of(leadersArr);
+        List<LeaderDTO> leadersByPartyId = leaderClient.getLeadersByPartyId(partyId);
+        log.debug("Response from Leader Service: {}", leadersByPartyId);
+        return leadersByPartyId;
     }
 
     /**
@@ -52,9 +47,9 @@ public class RemoteServiceHelper {
      * @return
      */
     public Optional<LeaderDTO> findLeaderByPartyIdAndLeaderId(Long partyId, Long leaderId) {
-        final String URI = LEADER_SERVICE_URI + "find/" + partyId + "/" + leaderId;
-        Optional<LeaderDTO> optionalLeaderDTO = Optional.ofNullable(restTemplate.getForObject(URI, LeaderDTO.class));
-        log.info("Response from {}: {}", URI, optionalLeaderDTO.get());
+        LeaderDTO leaderDTO = leaderClient.getLeaderByPartyIdAndLeaderId(partyId, leaderId);
+        Optional<LeaderDTO> optionalLeaderDTO = Optional.ofNullable(leaderDTO);
+        log.debug("Response from Leader Service: {}", leaderDTO);
         return optionalLeaderDTO;
     }
 
@@ -66,8 +61,8 @@ public class RemoteServiceHelper {
      * @return
      */
     public boolean deleteLeaderByPartyIdAndLeaderId(Long partyId, Long leaderId) {
-        final String URI = LEADER_SERVICE_URI + "delete/" + partyId + "/" + leaderId;
-        restTemplate.delete(URI, Boolean.class);
-        return true;
+        boolean status = leaderClient.deleteLeaderByPartyIdAndLeaderId(partyId, leaderId);
+        log.debug("Response from Leader Service: {}", status);
+        return status;
     }
 }
