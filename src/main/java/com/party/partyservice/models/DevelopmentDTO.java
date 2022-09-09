@@ -3,6 +3,7 @@ package com.party.partyservice.models;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Set;
 
 @Data
 public class DevelopmentDTO implements Serializable {
@@ -14,7 +15,7 @@ public class DevelopmentDTO implements Serializable {
 
     private String title;
 
-    private String activity;
+    private Set<ActivityDTO> activityDTOS;
 
     private Double budget;
 
